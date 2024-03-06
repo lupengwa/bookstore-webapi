@@ -1,0 +1,10 @@
+#Service port
+PORT: 3000
+
+#Data Source
+PG_DB_URL: localhost
+PG_DB_PORT: 5432
+PG_DB_NAME: postgres
+PG_DB_USER: postgres
+PG_DB_PASSWORD: postgres
+PG_DB_SSL: disable
