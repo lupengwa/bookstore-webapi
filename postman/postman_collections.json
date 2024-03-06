@@ -1,0 +1,202 @@
+{
+	"info": {
+		"_postman_id": "e91da5b2-6719-4424-be93-70edf7a0eaaa",
+		"name": "Bookstore APIs",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "4908697"
+	},
+	"item": [
+		{
+			"name": "/cart",
+			"item": [
+				{
+					"name": "Create Cart",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Successful POST request\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/cart?userId=5d2f8a5e-9379-4e74-8e6c-f8027eea28aa",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"cart"
+							],
+							"query": [
+								{
+									"key": "userId",
+									"value": "5d2f8a5e-9379-4e74-8e6c-f8027eea28aa"
+								}
+							]
+						},
+						"description": "This endpoint allows you to create a cart or add items to a specific cart identified by the cart ID. Upon a successful execution, it returns the updated cart details including the cart ID and the list of items added to the cart.\n\nThe request should be a POST method to the endpoint `{{base_url}}/cart/8616ca33-b7aa-438e-bb45-862c6406ede9`.\n\nThe response will have a status code of 201 for creating a cart or status code 200 for adding items to the cart. The response body will contain the updated cart details, including the cart ID and the list of items added to the cart, where each item is represented by its SKU ID and the quantity added.\n\nExample response body:\n\n``` json\n{\n    \"cartId\": \"example_cart_id\",\n    \"cartItems\": [\n        {\n            \"skuId\": \"example_sku_id\",\n            \"quantity\": 2\n        }\n    ]\n}\n\n ```"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Cart",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Successful POST request\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+									"});",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "userId",
+								"value": "5d2f8a5e-9379-4e74-8e6c-f8027eea28aa",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{   \"cartId\":\"5d2f8a5e-9379-4e74-8e6c-f8027eea28aa\",\n    \"cartItems\": [\n        {\n            \"skuId\":\"2b8689ca-4c9e-417c-9303-f012ab75f525\",\n            \"quantity\": 3\n        },\n                {\n            \"skuId\":\"eb5e507c-ff58-4750-be22-5f8dd52fb4ec\",\n            \"quantity\": 2\n        }\n    ],\n    \"total\": 25.00\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/cart/5d2f8a5e-9379-4e74-8e6c-f8027eea28aa",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"cart",
+								"5d2f8a5e-9379-4e74-8e6c-f8027eea28aa"
+							]
+						},
+						"description": "This is a POST request, submitting data to an API via the request body. This request submits JSON data, and the data is reflected in the response.\n\nA successful POST request typically returns a `200 OK` or `201 Created` response code."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Cart Items",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/cart/5d2f8a5e-9379-4e74-8e6c-f8027eea28aa?userId=08d92108-b49d-4aa6-b3ee-d6248813bad4",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"cart",
+								"5d2f8a5e-9379-4e74-8e6c-f8027eea28aa"
+							],
+							"query": [
+								{
+									"key": "userId",
+									"value": "08d92108-b49d-4aa6-b3ee-d6248813bad4"
+								}
+							]
+						},
+						"description": "This endpoint retrieves the details of a specific shopping cart identified by its ID. The response will include the cart ID and an array of cart items, each containing the SKU ID and the quantity.\n\nThe response will have a status code of 200, and the content type will be in JSON format."
+					},
+					"response": []
+				},
+				{
+					"name": "Checkout Cart",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/cart/5d2f8a5e-9379-4e74-8e6c-f8027eea28aa/checkout?userId=5d2f8a5e-9379-4e74-8e6c-f8027eea28aa",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"cart",
+								"5d2f8a5e-9379-4e74-8e6c-f8027eea28aa",
+								"checkout"
+							],
+							"query": [
+								{
+									"key": "userId",
+									"value": "5d2f8a5e-9379-4e74-8e6c-f8027eea28aa"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "/cart handles all requests related to cart action"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "id",
+			"value": "1",
+			"disabled": true
+		},
+		{
+			"key": "base_url",
+			"value": "https://postman-rest-api-learner.glitch.me/",
+			"disabled": true
+		},
+		{
+			"key": "base_url",
+			"value": "localhost:3000/api",
+			"type": "string"
+		}
+	]
+}

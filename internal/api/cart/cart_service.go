@@ -3,17 +3,19 @@ package cart
 import (
 	"bookstore-webapi/internal/api/cart/dto"
 	"bookstore-webapi/internal/api/cart/entity"
+	"bookstore-webapi/internal/api/cart/mapper"
 	"bookstore-webapi/internal/api/mapperutils"
-	"bookstore-webapi/internal/mapper"
+	"bookstore-webapi/internal/apperror"
 	"fmt"
 	"log"
 )
 
 type Service interface {
 	GetCartItems(cartId string) (dto.CartDto, error)
-	ClearCart(cartId string) error
+	ClearCartItems(cartId string) error
 	AddCartItems(cartDto dto.CartDto, cartId string) (dto.CartDto, error)
 	CreateNewCart(cartId string) (bool, dto.CartDto, error)
+	GetCartAndItems(cartId string) (entity.CartEntity, []entity.CartItemEntity, error)
 }
 
 type ServiceImpl struct {
@@ -38,10 +40,10 @@ func (service ServiceImpl) GetCartItems(cartId string) (dto.CartDto, error) {
 	return cartDto, nil
 }
 
-func (service ServiceImpl) ClearCart(cartId string) error {
+func (service ServiceImpl) ClearCartItems(cartId string) error {
 	err := service.cartRepo.DeleteCartItemsByCartId(cartId)
 	if err != nil {
-		return fmt.Errorf("ClearCart: %w", err)
+		return fmt.Errorf("ClearCartItems: %w", err)
 	}
 	return nil
 }
@@ -96,4 +98,15 @@ func (service ServiceImpl) CreateNewCart(cartId string) (bool, dto.CartDto, erro
 		return false, cartDto, nil
 	}
 
+}
+
+func (service ServiceImpl) GetCartAndItems(cartId string) (entity.CartEntity, []entity.CartItemEntity, error) {
+	cartEntity, cartItemsEntity, err := service.cartRepo.FindCartAndItemsByCartId(cartId)
+	if err != nil {
+		return cartEntity, cartItemsEntity, fmt.Errorf("GetCartAndItems: %w", err)
+	}
+	if len(cartItemsEntity) == 0 {
+		return cartEntity, cartItemsEntity, apperror.CheckoutErr
+	}
+	return cartEntity, cartItemsEntity, nil
 }

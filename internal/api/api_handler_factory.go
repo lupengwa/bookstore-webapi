@@ -2,6 +2,7 @@ package api
 
 import (
 	"bookstore-webapi/internal/api/cart"
+	"bookstore-webapi/internal/api/order"
 	"bookstore-webapi/internal/api/restutils"
 	"bookstore-webapi/internal/platform/db"
 	"fmt"
@@ -65,7 +66,10 @@ func (factory *HandlerFactoryImpl) registerUriPathForHandler(handler Handler) er
 func (factory *HandlerFactoryImpl) initCartHandler() error {
 	cartRepo := cart.NewRepository(factory.dataSource)
 	cartService := cart.NewService(cartRepo)
-	cartHandler := cart.NewApiHandler(cartService)
+	orderRepo := order.NewRepository(factory.dataSource)
+	orderService := order.NewService(orderRepo)
+
+	cartHandler := cart.NewApiHandler(cartService, orderService)
 	err := factory.registerUriPathForHandler(cartHandler)
 	if err != nil {
 		log.Println("failed to register cart handler")
@@ -75,6 +79,15 @@ func (factory *HandlerFactoryImpl) initCartHandler() error {
 }
 
 func (factory *HandlerFactoryImpl) initOrderHandler() error {
+	orderRepo := order.NewRepository(factory.dataSource)
+	orderService := order.NewService(orderRepo)
+
+	orderHandler := order.NewApiHandler(orderService)
+	err := factory.registerUriPathForHandler(orderHandler)
+	if err != nil {
+		log.Println("failed to register order handler")
+		return err
+	}
 	return nil
 }
 

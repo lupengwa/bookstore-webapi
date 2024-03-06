@@ -90,7 +90,19 @@ func (repo *RepositoryImpl) DeleteByCartId(cartId string) error {
 }
 
 func (repo *RepositoryImpl) DeleteCartItemsByCartId(cartId string) error {
-	if err := repo.db.Where("cart_id = ?", cartId).Delete(&entity.CartItemEntity{}).Error; err != nil {
+	err := repo.db.Transaction(func(tx *gorm.DB) error {
+		// do some database operations in the transaction (use 'tx' from this point, not 'db')
+		if err := tx.Model(&entity.CartEntity{}).Where("id = ?", cartId).Update("total", 0).Error; err != nil {
+			return err
+		}
+
+		if err := tx.Where("cart_id = ?", cartId).Delete(&entity.CartItemEntity{}).Error; err != nil {
+			return err
+		}
+		// return nil will commit the whole transaction
+		return nil
+	})
+	if err != nil {
 		return fmt.Errorf("DeleteCartItemsByCartId: %w", err)
 	}
 	return nil

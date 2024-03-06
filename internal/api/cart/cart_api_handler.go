@@ -2,6 +2,8 @@ package cart
 
 import (
 	"bookstore-webapi/internal/api/cart/dto"
+	"bookstore-webapi/internal/api/order"
+	"bookstore-webapi/internal/api/order/entity"
 	"bookstore-webapi/internal/api/restutils"
 	"bookstore-webapi/internal/apperror"
 	"fmt"
@@ -19,14 +21,18 @@ const (
 
 // ApiHandler is the API request handler for the cart domain
 type ApiHandler struct {
-	service Service
+	cartService  Service
+	orderService order.Service
 }
 
-func NewApiHandler(cartService Service) *ApiHandler {
+func NewApiHandler(cartService Service, orderService order.Service) *ApiHandler {
 	if cartService == nil {
-		log.Panic("Cart repo can't be nil")
+		log.Panic("cart service can't be nil")
 	}
-	return &ApiHandler{service: cartService}
+	if orderService == nil {
+		log.Panic("order service can't be nil")
+	}
+	return &ApiHandler{cartService: cartService, orderService: orderService}
 }
 
 func (handler *ApiHandler) GetRestUriToHandlerConfig() map[restutils.RestApiUriKey]http.HandlerFunc {
@@ -50,6 +56,7 @@ func (handler *ApiHandler) GetRestUriToHandlerConfig() map[restutils.RestApiUriK
 	}
 }
 
+// ListCartItems fetch all cart items
 func (handler *ApiHandler) ListCartItems(w http.ResponseWriter, r *http.Request) {
 	// validate user
 	_, err := restutils.ValidateUser(r)
@@ -64,7 +71,7 @@ func (handler *ApiHandler) ListCartItems(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	cart, err := handler.service.GetCartItems(cartId)
+	cart, err := handler.cartService.GetCartItems(cartId)
 	if err != nil {
 		restutils.ToErrorResponse(w, r, apperror.ServerErr, http.StatusInternalServerError)
 		log.Printf("ListCartItems: %v\n", err)
@@ -73,6 +80,7 @@ func (handler *ApiHandler) ListCartItems(w http.ResponseWriter, r *http.Request)
 	restutils.ToSuccessPayloadResponse(w, r, cart)
 }
 
+// UpdateCart update cart in db
 func (handler *ApiHandler) UpdateCart(w http.ResponseWriter, r *http.Request) {
 	_, err := restutils.ValidateUser(r)
 	if err != nil {
@@ -96,14 +104,16 @@ func (handler *ApiHandler) UpdateCart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = handler.service.ClearCart(cartId)
+	// clear existing cart
+	err = handler.cartService.ClearCartItems(cartId)
 	if err != nil {
 		restutils.ToErrorResponse(w, r, apperror.ServerErr, http.StatusInternalServerError)
 		log.Printf("UpdateCart: %s failed cause: %s", cartId, err)
 		return
 	}
 
-	updatedCart, err := handler.service.AddCartItems(cartDto, cartId)
+	// update new cart
+	updatedCart, err := handler.cartService.AddCartItems(cartDto, cartId)
 	if err != nil {
 		restutils.ToErrorResponse(w, r, apperror.ServerErr, http.StatusInternalServerError)
 		log.Printf("UpdateCart: failed to update cart item. cause: %v\n", err)
@@ -113,19 +123,19 @@ func (handler *ApiHandler) UpdateCart(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// CreateCart creates a new cart
 func (handler *ApiHandler) CreateCart(w http.ResponseWriter, r *http.Request) {
 	userId, err := restutils.ValidateUser(r)
 	if err != nil {
 		restutils.ToErrorResponse(w, r, apperror.InvalidUserErr, http.StatusUnauthorized)
 		return
 	}
-	// check if cart already exists
 	cartId := userId
 
 	// use Location to inform client the resource directory
 	w.Header().Set("Location", fmt.Sprintf("/cart/%s", cartId))
 
-	isNewCart, cartDto, err := handler.service.CreateNewCart(cartId)
+	isNewCart, cartDto, err := handler.cartService.CreateNewCart(cartId)
 	if err != nil {
 		restutils.ToErrorResponse(w, r, apperror.ServerErr, http.StatusInternalServerError)
 		log.Printf("CreateCart: %v\n", err)
@@ -140,6 +150,53 @@ func (handler *ApiHandler) CreateCart(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// CheckoutCart checkout a cart and create an order
 func (handler *ApiHandler) CheckoutCart(w http.ResponseWriter, r *http.Request) {
+	userId, err := restutils.ValidateUser(r)
+	if err != nil {
+		restutils.ToErrorResponse(w, r, apperror.InvalidUserErr, http.StatusUnauthorized)
+		return
+	}
 
+	cartId := chi.URLParam(r, "cartId")
+	if cartId == "" {
+		restutils.ToErrorResponse(w, r, apperror.MissingCartIdErr, http.StatusBadRequest)
+		return
+	}
+
+	// assume payment is always successful
+	paymentSuccess := true
+	if !paymentSuccess {
+		restutils.ToErrorResponse(w, r, apperror.PaymentErr, http.StatusInternalServerError)
+		return
+	}
+
+	// fetch cart info
+	cartEntity, cartItemsEntity, err := handler.cartService.GetCartAndItems(cartId)
+	if err != nil {
+		restutils.ToErrorResponse(w, r, apperror.PaymentErr, http.StatusInternalServerError)
+		return
+	}
+
+	// convert cart item to order item
+	var orderItems []entity.OrderItemEntity
+	for _, item := range cartItemsEntity {
+		orderItems = append(orderItems, entity.OrderItemEntity{SkuId: item.SkuId, Quantity: item.Quantity})
+	}
+
+	// create order
+	orderResp, err := handler.orderService.CreateNewOrder(userId, cartEntity.Total, orderItems)
+	if err != nil {
+		restutils.ToErrorResponse(w, r, apperror.ServerErr, http.StatusInternalServerError)
+		log.Printf("CheckoutCart: %v\n", err)
+		return
+	}
+
+	// clear cart
+	err = handler.cartService.ClearCartItems(cartId)
+	if err != nil {
+		log.Printf("CheckoutCart: order created but failed to clear cart: %s %v \n", cartId, err)
+	}
+
+	restutils.ToSuccessPayloadResponse(w, r, orderResp)
 }
