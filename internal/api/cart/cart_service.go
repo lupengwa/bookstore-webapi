@@ -35,6 +35,9 @@ func (service ServiceImpl) GetCartItems(cartId string) (dto.CartDto, error) {
 	if err != nil {
 		return cartDto, fmt.Errorf("GetCartItems: %w\n", err)
 	}
+	if cartEntity.ID == "" {
+		return cartDto, nil
+	}
 	result := mapperutils.EntityListToDtoList[entity.CartItemEntity, dto.CartItemDto](cartItemsEntity, mapper.CartItemEntityToCartItemDto)
 	cartDto = dto.CartDto{CartId: cartId, Total: cartEntity.Total, CartItems: result}
 	return cartDto, nil

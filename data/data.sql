@@ -7,6 +7,7 @@ INSERT INTO bookstore.books (id, name, price) VALUES (gen_random_uuid(),'5th Boo
 INSERT INTO bookstore.users (id, email) VALUES (gen_random_uuid(),'test1@gmail.com');
 INSERT INTO bookstore.users (id, email) VALUES (gen_random_uuid(),'test2@gmail.com');
 INSERT INTO bookstore.users (id, email) VALUES (gen_random_uuid(),'test3@gmail.com');
+INSERT INTO bookstore.users (id, email) VALUES (gen_random_uuid(),'test4@gmail.com');
 
 
 

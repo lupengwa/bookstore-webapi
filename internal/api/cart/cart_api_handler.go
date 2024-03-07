@@ -77,6 +77,10 @@ func (handler *ApiHandler) ListCartItems(w http.ResponseWriter, r *http.Request)
 		log.Printf("ListCartItems: %v\n", err)
 		return
 	}
+	if cart.CartId == "" {
+		restutils.ToErrorResponse(w, r, apperror.MissingCartInDBErr, http.StatusInternalServerError)
+		return
+	}
 	restutils.ToSuccessPayloadResponse(w, r, cart)
 }
 
@@ -174,7 +178,7 @@ func (handler *ApiHandler) CheckoutCart(w http.ResponseWriter, r *http.Request) 
 	// fetch cart info
 	cartEntity, cartItemsEntity, err := handler.cartService.GetCartAndItems(cartId)
 	if err != nil {
-		restutils.ToErrorResponse(w, r, apperror.PaymentErr, http.StatusInternalServerError)
+		restutils.ToErrorResponse(w, r, apperror.CheckoutErr, http.StatusInternalServerError)
 		return
 	}
 

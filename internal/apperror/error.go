@@ -5,6 +5,7 @@ import "errors"
 // InvalidUserErr user related error
 var InvalidUserErr = errors.New("invalid user")
 var MissingCartIdErr = errors.New("missing cartId in request")
+var MissingCartInDBErr = errors.New("cart has not been created yet")
 
 // ServerErr is server end error
 var CheckoutErr = errors.New("can't checkout empty cart")
